@@ -1,0 +1,344 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Julia's AI Brain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=Manrope:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a glowing neural map fills the stage; a glass detail panel floats right (stacks below on phones). Single committed dark look. */
+:root{
+  --void:#08071a;
+  --void-2:#120f33;
+  --ink:#ece9ff;
+  --dim:#a29ed0;
+  --faint:#5d5992;
+  --panel:rgba(18,15,46,.78);
+  --edge:rgba(160,150,255,.16);
+  --pink:#ff74d4;
+  --cyan:#62e2ff;
+  --violet:#b097ff;
+  --blue:#7590ff;
+  --mist:#c9c4f2;
+  --display:"Syne","Avenir Next","Segoe UI",sans-serif;
+  --body:"Manrope","Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--void);color:var(--ink)}
+body{font-family:var(--body);font-size:15px;line-height:1.55;padding-inline:clamp(16px,4vw,48px);padding-block:clamp(20px,4vw,44px) 40px;
+  background:radial-gradient(1200px 700px at 70% 20%,var(--void-2),var(--void) 70%) fixed;}
+.wrap{max-width:1240px;margin:0 auto;display:grid;gap:22px}
+header{display:grid;gap:14px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--pink)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,6.4vw,72px);line-height:.98;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--pink),var(--violet) 55%,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{color:var(--dim);max-width:60ch;margin:0;font-size:16px}
+.legend{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:500 13px/1 var(--body);color:var(--ink);background:rgba(255,255,255,.03);border:1px solid var(--edge);border-radius:999px;padding:9px 14px 9px 11px;display:inline-flex;align-items:center;gap:9px;cursor:pointer;transition:border-color .2s,background .2s}
+.chip:hover,.chip[aria-pressed="true"]{border-color:var(--c);background:rgba(255,255,255,.06)}
+.chip:focus-visible,.list-btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c)}
+.count{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.stage{position:relative;height:clamp(460px,72vh,780px);border:1px solid var(--edge);border-radius:22px;overflow:hidden;background:radial-gradient(closest-side at 50% 50%,rgba(117,144,255,.08),transparent)}
+canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+canvas.dragging{cursor:grabbing}
+.hint{position:absolute;left:16px;bottom:14px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);pointer-events:none}
+aside{position:absolute;top:16px;right:16px;width:330px;max-height:calc(100% - 32px);overflow:auto;background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--edge);border-radius:16px;padding:20px 20px 18px;display:grid;gap:12px;align-content:start}
+.p-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--c,var(--violet))}
+aside h2{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.15;margin:0;text-wrap:balance}
+aside p{margin:0;color:var(--mist);font-size:14.5px}
+.meta{display:grid;gap:6px;margin:0;padding:12px 0 0;border-top:1px solid var(--edge)}
+.meta div{display:grid;grid-template-columns:72px 1fr;gap:10px;font-size:13px}
+.meta dt{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);padding-top:2px}
+.meta dd{margin:0;color:var(--ink)}
+.list{display:grid;gap:6px}
+.list-btn{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;border:1px solid transparent;font-size:14px;color:var(--ink)}
+.list-btn:hover{border-color:var(--edge);background:rgba(255,255,255,.04)}
+.back{all:unset;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.back:hover{color:var(--ink)}
+@media (max-width:860px){
+  .stage{height:clamp(420px,64vh,620px)}
+  aside{position:static;width:auto;max-height:none;margin-top:14px;background:rgba(18,15,46,.6)}
+  .stage-wrap{display:grid}
+}
+@media (prefers-reduced-motion:reduce){.chip{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Julia Lizak · Side work, Fall 2026</div>
+    <h1>The brain behind <em>my AI</em></h1>
+    <p class="lede">Outside of class and work, I build things with Claude to get better at using AI day to day. Agents that run on their own every morning, dashboards, a custom skill, and the projects that hold it all together. Drag the nodes around, or tap one to see what it does.</p>
+    <div class="legend" id="legend"></div>
+  </header>
+
+  <div class="stage-wrap">
+    <div class="stage" id="stage">
+      <canvas id="c" aria-label="Interactive map of Julia's AI agents, dashboards, skills and projects"></canvas>
+      <div class="hint">Drag · tap a node</div>
+      <aside id="panel" aria-live="polite"></aside>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== Content: edit labels and descriptions here ===== */
+const GROUPS = {
+  agents:   {label:"Scheduled agents", color:"#ff74d4", blurb:"Agents that run on their own every morning around 8 AM. Each one checks a few sources, compares against what it already knows, and only writes something down (and pings my phone) when something actually changed."},
+  dashboards:{label:"Dashboards", color:"#62e2ff", blurb:"Interactive pages built from data, made to be looked at and shared."},
+  skills:   {label:"Custom skills", color:"#b097ff", blurb:"Reusable instructions I've packaged so Claude does a specific kind of task the same way every time."},
+  projects: {label:"Projects", color:"#7590ff", blurb:"Workspaces where Claude keeps the files, notes, and context for an ongoing area of my life."},
+  tools:    {label:"Connected apps", color:"#c9c4f2", blurb:"The apps Claude is connected to. The agents read from these."}
+};
+
+const CORE = {id:"core", label:"Claude", desc:"The AI at the center of all of it. It's connected to my Gmail, Google Drive, and Slack, and everything on this map runs through it."};
+
+const ITEMS = [
+  {id:"pmf", g:"agents", label:"PMF Course Update Check",
+   desc:"Every morning it checks course email, the shared Drive folder, and Canvas for new announcements, schedule changes, or due dates. Anything new gets logged in my course project and sent to my phone. It only does admin tracking and never touches coursework.",
+   meta:{Runs:"Daily, 8 AM", Uses:"Gmail, Google Drive, Canvas"}},
+  {id:"llm", g:"agents", label:"CSE 60556 LLM Course Check",
+   desc:"Reads the class Slack channel, emails from the professor and TA, and the lecture slides folder. When something changes, it updates a running course summary with a dated changelog.",
+   meta:{Runs:"Daily, 8 AM", Uses:"Slack, Gmail, Google Drive"}},
+  {id:"hcc", g:"agents", label:"CSE 60427 Course Check",
+   desc:"Compares the course website's schedule and policies against my notes and scans course email. It only rewrites my notes when something actually changed, so there's no noise.",
+   meta:{Runs:"Daily, 8 AM", Uses:"Course website, Gmail"}},
+  {id:"amongus", g:"agents", label:"Among Us Research Email Check",
+   desc:"Watches for emails from my research advisor and PhD mentor, filters out anything unrelated to the project, and logs meetings, links, and deadlines into my research workspace.",
+   meta:{Runs:"Daily, 8 AM", Uses:"Gmail"}},
+  {id:"fin", g:"dashboards", label:"Julia's Financial Report",
+   desc:"A personal finance report I built with Claude to see where my money goes in one view.",
+   meta:{Type:"Interactive dashboard"}},
+  {id:"budgetdemo", g:"dashboards", label:"Student Budget Dashboard",
+   desc:"An interactive budget dashboard for students, built as a shareable demo with sample data.",
+   meta:{Type:"Demo dashboard"}},
+  {id:"ndb", g:"skills", label:"nd-branding",
+   desc:"A reusable skill that teaches Claude Notre Dame's official colors, fonts, and logos, so anything I make for ND or WiCS comes out on brand automatically.",
+   meta:{Type:"Custom skill"}},
+  {id:"entre", g:"projects", label:"Entrepreneur Aspiration",
+   desc:"A workspace for business ideas and startup thinking.", meta:{Type:"Project"}},
+  {id:"agentsres", g:"projects", label:"Researching AI Agents",
+   desc:"Reading and notes on how LLM agents plan, communicate, and deceive. It feeds my Among Us research.", meta:{Type:"Project"}},
+  {id:"wics", g:"projects", label:"WiCS",
+   desc:"Materials for Women in Computer Science at Notre Dame, where I'm secretary this year.", meta:{Type:"Project"}},
+  {id:"site", g:"projects", label:"Personal Website",
+   desc:"Planning and building my personal site. This map lives there.", meta:{Type:"Project"}},
+  {id:"budget", g:"projects", label:"Budget Tracker",
+   desc:"The project behind my budget dashboards: categories, goals, and monthly spending.", meta:{Type:"Project"}},
+  {id:"gmail", g:"tools", label:"Gmail", desc:"Connected so the agents can read course and research email.", meta:{Type:"Connected app"}},
+  {id:"drive", g:"tools", label:"Google Drive", desc:"Connected so the agents can spot new files in shared course folders.", meta:{Type:"Connected app"}},
+  {id:"slack", g:"tools", label:"Slack", desc:"Connected so an agent can follow class announcements.", meta:{Type:"Connected app"}}
+];
+
+/* extra links between related things (dashed) */
+const CROSS = [
+  ["gmail","pmf"],["gmail","llm"],["gmail","hcc"],["gmail","amongus"],
+  ["drive","pmf"],["drive","llm"],["slack","llm"],
+  ["budget","budgetdemo"],["budget","fin"],["agentsres","amongus"],
+  ["wics","ndb"],["entre","pmf"]
+];
+
+/* ===== Graph setup ===== */
+const nodes=[], edges=[], byId={};
+let hover=null,selected=null,drag=null;
+function addNode(o){const n=Object.assign({x:0,y:0,vx:0,vy:0,r:6},o);nodes.push(n);byId[n.id]=n;return n;}
+const core=addNode({id:"core",type:"core",label:CORE.label,desc:CORE.desc,r:22,fixed:true,color:"#ffffff"});
+const groupKeys=Object.keys(GROUPS);
+groupKeys.forEach((g,i)=>{
+  const a=-Math.PI/2+i*2*Math.PI/groupKeys.length;
+  const h=addNode({id:"hub-"+g,type:"hub",g,label:GROUPS[g].label,desc:GROUPS[g].blurb,r:12,color:GROUPS[g].color,
+    x:Math.cos(a)*150,y:Math.sin(a)*150});
+  edges.push({a:core,b:h,len:g==="tools"?190:140,k:.05,kind:"main"});
+  const kids=ITEMS.filter(it=>it.g===g);
+  kids.forEach((it,j)=>{
+    const aa=a+(j-(kids.length-1)/2)*.55;
+    const n=addNode(Object.assign({},it,{type:"item",r:g==="tools"?5:7,color:GROUPS[g].color,
+      x:Math.cos(aa)*250+(Math.random()-.5)*10,y:Math.sin(aa)*250+(Math.random()-.5)*10}));
+    edges.push({a:h,b:n,len:95,k:.06,kind:"main"});
+  });
+});
+CROSS.forEach(([x,y])=>edges.push({a:byId[x],b:byId[y],len:170,k:.006,kind:"cross"}));
+nodes.forEach(n=>n.nb=new Set());
+edges.forEach(e=>{e.a.nb.add(e.b);e.b.nb.add(e.a);});
+
+/* ===== Physics ===== */
+function step(){
+  for(let i=0;i<nodes.length;i++){const p=nodes[i];
+    for(let j=i+1;j<nodes.length;j++){const q=nodes[j];
+      let dx=q.x-p.x,dy=q.y-p.y,d2=dx*dx+dy*dy;if(d2<1){dx=Math.random();dy=Math.random();d2=1;}
+      const f=2600/Math.max(d2,120),d=Math.sqrt(d2),fx=dx/d*f,fy=dy/d*f;
+      p.vx-=fx;p.vy-=fy;q.vx+=fx;q.vy+=fy;}}
+  edges.forEach(e=>{const dx=e.b.x-e.a.x,dy=e.b.y-e.a.y,d=Math.hypot(dx,dy)||1,f=(d-e.len)*e.k,fx=dx/d*f,fy=dy/d*f;
+    e.a.vx+=fx;e.a.vy+=fy;e.b.vx-=fx;e.b.vy-=fy;});
+  nodes.forEach(n=>{
+    if(n.fixed||n===drag){n.vx=n.vy=0;return;}
+    n.vx-=n.x*.0012;n.vy-=n.y*.0012;
+    n.vx*=.82;n.vy*=.82;
+    const sp=Math.hypot(n.vx,n.vy);if(sp>12){n.vx*=12/sp;n.vy*=12/sp;}
+    n.x+=n.vx;n.y+=n.vy;});
+}
+for(let i=0;i<400;i++)step();
+
+/* ===== Canvas ===== */
+const cv=document.getElementById("c"),ctx=cv.getContext("2d"),stage=document.getElementById("stage");
+let W=0,H=0,DPR=1,view={s:1,x:0,y:0},stars=[];
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+function resize(){
+  DPR=Math.min(devicePixelRatio||1,2);W=stage.clientWidth;H=stage.clientHeight;
+  cv.width=W*DPR;cv.height=H*DPR;
+  stars=Array.from({length:Math.round(W*H/5000)},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+.2,a:Math.random()*.5+.1}));
+}
+new ResizeObserver(resize).observe(stage);resize();
+function panelSpace(){return W>860?346:0;}
+function fit(instant){
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  nodes.forEach(n=>{x0=Math.min(x0,n.x);y0=Math.min(y0,n.y);x1=Math.max(x1,n.x);y1=Math.max(y1,n.y);});
+  const padX=90,padY=50,avail=W-panelSpace();
+  const s=Math.min(1.5,(avail-padX*2)/Math.max(1,x1-x0),(H-padY*2)/Math.max(1,y1-y0));
+  const tx=avail/2-((x0+x1)/2)*s,ty=H/2-((y0+y1)/2)*s;
+  const k=instant?1:.06;
+  view.s+=(s-view.s)*k;view.x+=(tx-view.x)*k;view.y+=(ty-view.y)*k;
+}
+fit(true);
+const toScreen=n=>[n.x*view.s+view.x,n.y*view.s+view.y];
+
+/* signal pulses travelling along links */
+const pulses=[];
+function spawn(){const e=edges[Math.floor(Math.random()*edges.length)];
+  const fwd=e.a===core||e.a.type==="hub"?true:Math.random()<.5;
+  pulses.push({e,t:0,v:.006+Math.random()*.008,fwd});}
+
+const t0=performance.now();
+function related(n){if(!selected)return true;return n===selected||selected.nb.has(n);}
+
+function draw(now){
+  const t=(now-t0)/1000;
+  ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
+  stars.forEach(s=>{ctx.globalAlpha=s.a*(reduce?1:.7+.3*Math.sin(t*.8+s.x));ctx.fillStyle="#cfd0ff";ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.fill();});
+  ctx.globalAlpha=1;
+  const focus=hover||selected;
+  /* edges */
+  edges.forEach(e=>{
+    const [ax,ay]=toScreen(e.a),[bx,by]=toScreen(e.b);
+    const on=focus&&(e.a===focus||e.b===focus);
+    const dim=selected&&!on;
+    const col=e.b.color===  "#ffffff"?e.a.color:e.b.color;
+    ctx.lineWidth=e.kind==="main"?(on?2:1.2):1;
+    ctx.setLineDash(e.kind==="cross"?[3,5]:[]);
+    const g=ctx.createLinearGradient(ax,ay,bx,by);
+    g.addColorStop(0,hexA(e.a.type==="core"?col:e.a.color,on?.85:dim?.07:.32));
+    g.addColorStop(1,hexA(col,on?.85:dim?.07:.32));
+    ctx.strokeStyle=g;ctx.beginPath();
+    const mx=(ax+bx)/2+(by-ay)*.08,my=(ay+by)/2-(bx-ax)*.08;
+    ctx.moveTo(ax,ay);ctx.quadraticCurveTo(mx,my,bx,by);ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  /* pulses */
+  if(!reduce){
+    if(Math.random()<.18&&pulses.length<40)spawn();
+    for(let i=pulses.length-1;i>=0;i--){const p=pulses[i];p.t+=p.v;if(p.t>=1){pulses.splice(i,1);continue;}
+      const a=p.fwd?p.e.a:p.e.b,b=p.fwd?p.e.b:p.e.a;const [ax,ay]=toScreen(a),[bx,by]=toScreen(b);
+      const ex=p.e.a,ey=p.e.b;const [sx,sy]=toScreen(ex),[tx2,ty2]=toScreen(ey);
+      const mx=(sx+tx2)/2+(ty2-sy)*.08,my=(sy+ty2)/2-(tx2-sx)*.08;
+      const u=p.fwd?p.t:1-p.t,x=(1-u)*(1-u)*sx+2*(1-u)*u*mx+u*u*tx2,y=(1-u)*(1-u)*sy+2*(1-u)*u*my+u*u*ty2;
+      const c=b.type==="core"?a.color:b.color;
+      const dim=selected&&!(p.e.a===selected||p.e.b===selected);
+      ctx.globalAlpha=(dim?.15:1)*Math.sin(p.t*Math.PI);
+      ctx.fillStyle=c;ctx.shadowColor=c;ctx.shadowBlur=10;ctx.beginPath();ctx.arc(x,y,1.8,0,7);ctx.fill();}
+    ctx.shadowBlur=0;ctx.globalAlpha=1;
+  }
+  /* nodes */
+  nodes.forEach(n=>{
+    const [x,y]=toScreen(n);const rel=related(n);const isF=n===focus;
+    let r=n.r*(isF?1.25:1);
+    if(n.type==="core"){
+      const br=reduce?0:Math.sin(t*1.6)*2;
+      [44,32].forEach((rr,i)=>{ctx.strokeStyle=hexA(i?"#b097ff":"#ff74d4",.22-i*.05);ctx.lineWidth=1;ctx.beginPath();ctx.arc(x,y,rr+br*(i+1)+(reduce?0:Math.sin(t*.7+i)*3),0,7);ctx.stroke();});
+      const g=ctx.createRadialGradient(x,y,2,x,y,r+br);
+      g.addColorStop(0,"#ffffff");g.addColorStop(.45,"#e3d6ff");g.addColorStop(1,"#a98bff");
+      ctx.shadowColor="#b79dff";ctx.shadowBlur=36;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r+br,0,7);ctx.fill();ctx.shadowBlur=0;
+    }else{
+      ctx.globalAlpha=rel?1:.18;
+      ctx.shadowColor=n.color;ctx.shadowBlur=isF?28:n.type==="hub"?20:12;
+      ctx.fillStyle=n.type==="hub"?n.color:"#0d0b26";
+      ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();
+      ctx.shadowBlur=0;ctx.lineWidth=n.type==="hub"?0:1.8;ctx.strokeStyle=n.color;
+      if(n.type!=="hub"){ctx.stroke();ctx.fillStyle=n.color;ctx.beginPath();ctx.arc(x,y,r*.38,0,7);ctx.fill();}
+      if(n===selected){ctx.strokeStyle=hexA(n.color,.6);ctx.lineWidth=1;ctx.beginPath();ctx.arc(x,y,r+7,0,7);ctx.stroke();}
+      ctx.globalAlpha=1;
+    }
+  });
+  /* labels */
+  const narrow=W<560;
+  nodes.forEach(n=>{
+    const [x,y]=toScreen(n);const rel=related(n);
+    const show=n.type!=="item"||!narrow||n===focus||(selected&&selected.nb.has(n))||(hover&&hover.nb.has(n));
+    if(!show)return;
+    ctx.globalAlpha=rel?1:.22;
+    let font,col,dy;
+    if(n.type==="core"){font="800 15px Syne, sans-serif";col="#ffffff";dy=n.r+26;}
+    else if(n.type==="hub"){font="600 11px 'IBM Plex Mono', monospace";col=n.color;dy=n.r+16;}
+    else{font=(n===focus?"600 ":"500 ")+"12.5px Manrope, sans-serif";col=n===focus?"#ffffff":(n.g==="tools"?"#a29ed0":"#ece9ff");dy=n.r+15;}
+    ctx.font=font;ctx.textAlign="center";ctx.textBaseline="middle";
+    const txt=n.type==="hub"?n.label.toUpperCase():n.label;
+    ctx.lineWidth=4;ctx.strokeStyle="rgba(8,7,26,.85)";ctx.strokeText(txt,x,y+dy);
+    ctx.fillStyle=col;ctx.fillText(txt,x,y+dy);
+  });
+  ctx.globalAlpha=1;
+}
+function hexA(h,a){const n=parseInt(h.slice(1),16);return`rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;}
+
+function loop(now){
+  step();if(!reduce)ambient(now);fit(false);draw(now);requestAnimationFrame(loop);
+}
+function ambient(now){const t=now/1000;nodes.forEach((n,i)=>{if(n.fixed||n===drag)return;n.vx+=Math.sin(t*.5+i*1.7)*.035;n.vy+=Math.cos(t*.43+i*2.3)*.035;});}
+requestAnimationFrame(loop);
+
+/* ===== Interaction ===== */
+function pick(px,py){let best=null,bd=1e9;
+  nodes.forEach(n=>{const [x,y]=toScreen(n);const d=Math.hypot(x-px,y-py);if(d<Math.max(n.r+10,18)&&d<bd){bd=d;best=n;}});return best;}
+let downAt=null,moved=false;
+cv.addEventListener("pointerdown",e=>{const r=cv.getBoundingClientRect();const n=pick(e.clientX-r.left,e.clientY-r.top);
+  downAt=[e.clientX,e.clientY];moved=false;
+  if(n&&!n.fixed){drag=n;cv.setPointerCapture(e.pointerId);cv.classList.add("dragging");}
+  else if(n){drag=null;}
+  cv._down=n;});
+cv.addEventListener("pointermove",e=>{const r=cv.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;
+  if(downAt&&Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1])>4)moved=true;
+  if(drag){drag.x=(px-view.x)/view.s;drag.y=(py-view.y)/view.s;}
+  else if(e.pointerType==="mouse"){hover=pick(px,py);cv.style.cursor=hover?"pointer":"grab";}});
+cv.addEventListener("pointerup",e=>{
+  const n=cv._down;
+  if(!moved){select(n||null);}
+  drag=null;downAt=null;cv.classList.remove("dragging");});
+cv.addEventListener("pointerleave",()=>{hover=null;});
+
+/* ===== Panel ===== */
+const panel=document.getElementById("panel");
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function select(n){selected=n&&n.type!=="core"?n:null;renderPanel(n);syncChips();}
+function renderPanel(n){
+  if(!n||n.type==="core"){
+    const counts=groupKeys.filter(g=>g!=="tools").map(g=>`<button class="list-btn" data-id="hub-${g}" style="--c:${GROUPS[g].color}"><span class="dot"></span>${esc(GROUPS[g].label)}<span class="count" style="margin-left:auto">${ITEMS.filter(i=>i.g===g).length}</span></button>`).join("");
+    panel.innerHTML=`<div class="p-eyebrow">The core</div><h2>Claude</h2><p>${esc(CORE.desc)}</p><div class="list">${counts}</div>`;
+  }else if(n.type==="hub"){
+    const kids=ITEMS.filter(i=>i.g===n.g).map(i=>`<button class="list-btn" data-id="${i.id}" style="--c:${n.color}"><span class="dot"></span>${esc(i.label)}</button>`).join("");
+    panel.innerHTML=`<button class="back" data-id="core">← Overview</button><div class="p-eyebrow" style="--c:${n.color}">${ITEMS.filter(i=>i.g===n.g).length} on the map</div><h2>${esc(n.label)}</h2><p>${esc(n.desc)}</p><div class="list">${kids}</div>`;
+  }else{
+    const G=GROUPS[n.g];
+    const meta=Object.entries(n.meta||{}).map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("");
+    const links=[...n.nb].filter(m=>m.type==="item").map(m=>`<button class="list-btn" data-id="${m.id}" style="--c:${m.color}"><span class="dot"></span>${esc(m.label)}</button>`).join("");
+    panel.innerHTML=`<button class="back" data-id="hub-${n.g}">← ${esc(G.label)}</button><div class="p-eyebrow" style="--c:${n.color}">${esc(G.label)}</div><h2>${esc(n.label)}</h2><p>${esc(n.desc)}</p>${meta?`<dl class="meta">${meta}</dl>`:""}${links?`<div class="p-eyebrow" style="--c:var(--dim)">Connected to</div><div class="list">${links}</div>`:""}`;
+  }
+}
+panel.addEventListener("click",e=>{const b=e.target.closest("[data-id]");if(b)select(byId[b.dataset.id]);});
+
+/* ===== Legend ===== */
+const legend=document.getElementById("legend");
+legend.innerHTML=groupKeys.map(g=>`<button class="chip" id="chip-${g}" data-id="hub-${g}" aria-pressed="false" style="--c:${GROUPS[g].color}"><span class="dot"></span>${esc(GROUPS[g].label)}<span class="count">${ITEMS.filter(i=>i.g===g).length}</span></button>`).join("");
+legend.addEventListener("click",e=>{const b=e.target.closest("[data-id]");if(!b)return;const n=byId[b.dataset.id];select(selected===n?null:n);});
+function syncChips(){groupKeys.forEach(g=>document.getElementById("chip-"+g).setAttribute("aria-pressed",String(!!selected&&(selected.g===g))));}
+renderPanel(null);
+</script>
+
+</body></html>
